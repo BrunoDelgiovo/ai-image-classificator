@@ -1,10 +1,11 @@
 import os
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types
 
 
 def _guess_mime(path: str) -> str:
+    # tenta adivinhar o tipo da imagem pelo final do nome
+    # nao é perfeito, mas resolve p/ jpg/png/webp
     p = path.lower()
     if p.endswith(".png"):
         return "image/png"
@@ -14,29 +15,55 @@ def _guess_mime(path: str) -> str:
 
 
 def describe_image(image_path: str) -> str:
+    # func principal que chama o gemini
+    # recebe o caminho da img
+    # devolve: "descricao | categoria"
+
+    # carrega variaveis do .env
     load_dotenv()
-    api_key = os.getenv("GEMINI_API_KEY")
-    model = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
 
+    api_key = os.getenv("gemini_api_key")
+    model = os.getenv("gemini_model", "gemini-2.0-flash")
+
+    # se nao tiver chave, para aqui
     if not api_key:
-        raise RuntimeError("Defina GEMINI_API_KEY no .env")
+        raise RuntimeError("faltou gemini_api_key no .env")
 
+    # cria cliente gemini
     client = genai.Client(api_key=api_key)
 
+    # le a imagem como bytes
     with open(image_path, "rb") as f:
         img_bytes = f.read()
 
+    # prompt simples e direto
+    # a gente força o formato de resposta
     prompt = (
-        "Descreva a imagem em 1-2 frases e sugira uma categoria curta. "
-        "Responda exatamente no formato: descrição | categoria"
+        "descreva a imagem em 1-2 frases e sugira uma categoria curta. "
+        "responda exatamente no formato: descricao | categoria"
     )
 
-    resp = client.models.generate_content(
+    # faz a chamada pro modelo
+    # manda texto + imagem inline
+    response = client.models.generate_content(
         model=model,
         contents=[
-            types.Part.from_text(prompt),
-            types.Part.from_bytes(data=img_bytes, mime_type=_guess_mime(image_path)),
+            {
+                "role": "user",
+                "parts": [
+                    # parte 1 = texto
+                    {"text": prompt},
+                    # parte 2 = imagem em bytes
+                    {
+                        "inline_data": {
+                            "mime_type": _guess_mime(image_path),
+                            "data": img_bytes,
+                        }
+                    },
+                ],
+            }
         ],
     )
 
-    return (resp.text or "").strip()
+    # devolve só o texto 
+    return response.text.strip()
