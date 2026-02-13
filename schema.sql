@@ -1,0 +1,13 @@
+CREATE DATABASE IF NOT EXISTS smartimg;
+USE smartimg;
+
+CREATE TABLE IF NOT EXISTS images (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  filename VARCHAR(255) NOT NULL,
+  sha256 CHAR(64) NOT NULL,
+  description TEXT NOT NULL,
+  category VARCHAR(80) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_images_sha256 ON images(sha256);
