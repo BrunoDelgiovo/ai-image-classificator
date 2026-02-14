@@ -1,3 +1,6 @@
+(algumas mudancas ainda precisam ser feitas)
+
+
 # AI Image Classifier + MySQL (Local)
 
 Pipeline:
