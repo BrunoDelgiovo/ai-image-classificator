@@ -33,6 +33,8 @@ def main():
 
     print("analisando imagem com ia...")
     text = describe_image(image_path)
+    print("DEBUG IA:", text)
+
 
     # espera descricao | categoria
     if "|" in text:

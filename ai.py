@@ -2,20 +2,16 @@ import base64
 import os
 import requests
 
-# endpoint local do ollama
 ollama_url = os.getenv("ollama_url", "http://localhost:11434/api/generate")
-ollama_model = os.getenv("ollama_model", "llava")
+ollama_model = os.getenv("ollama_model", "llava:latest")
 
 
 def _img_b64(path: str) -> str:
-    # le imagem e transforma em base64 (string)
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode("utf-8")
 
 
 def describe_image(image_path: str) -> str:
-    # chama llava local (sem custo) e devolve "descricao | categoria"
-
     prompt = (
         "descreva a imagem em 1-2 frases e sugira uma categoria curta. "
         "responda exatamente no formato: descricao | categoria"
@@ -29,7 +25,10 @@ def describe_image(image_path: str) -> str:
     }
 
     r = requests.post(ollama_url, json=payload, timeout=180)
-    r.raise_for_status()
-    data = r.json()
+    if r.status_code != 200:
+        print("status:", r.status_code)
+        print("body:", r.text)
+        r.raise_for_status()
 
+    data = r.json()
     return (data.get("response") or "").strip()
